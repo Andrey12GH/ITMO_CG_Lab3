@@ -52,6 +52,7 @@ struct PhongShader : public IShader {
 
     Vec3f varying_norm[3];
     Vec3f varying_pos[3];
+    Vec2f varying_uv[3];  
 
     PhongShader(Camera* cam, bool cube = false, float a = 1.0f)
         : camera(cam), isCube(cube), alpha(a) {
@@ -79,6 +80,7 @@ struct PhongShader : public IShader {
         else {
             v = model->vert(iface, nthvert);
             normal = model->normal(iface, nthvert).normalize();
+            varying_uv[nthvert] = model->uv(iface, nthvert);
         }
 
         varying_pos[nthvert] = v;
@@ -113,8 +115,15 @@ struct PhongShader : public IShader {
             color = TGAColor(r, g, b, alpha_val);
         }
         else {
-            unsigned char val = static_cast<unsigned char>(255 * intensity);
-            color = TGAColor(val, val, val);
+            Vec2f uv = varying_uv[0] * bar.x + varying_uv[1] * bar.y + varying_uv[2] * bar.z;
+            
+            TGAColor tex_color = model->diffuse(uv);
+            
+            unsigned char r = static_cast<unsigned char>(tex_color[2] * intensity);  
+            unsigned char g = static_cast<unsigned char>(tex_color[1] * intensity); 
+            unsigned char b = static_cast<unsigned char>(tex_color[0] * intensity);  
+            
+            color = TGAColor(r, g, b, 255);
         }
 
         return false;
@@ -188,7 +197,6 @@ int main(int argc, char** argv) {
     }
 
     ModelView = oldModelView;
-
 
     image.flip_vertically();
     zbuffer.flip_vertically();

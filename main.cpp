@@ -52,7 +52,6 @@ struct PhongShader : public IShader {
 
     Vec3f varying_norm[3];
     Vec3f varying_pos[3];
-    Vec2f varying_uv[3];  // Добавлено для текстурных координат
 
     PhongShader(Camera* cam, bool cube = false, float a = 1.0f)
         : camera(cam), isCube(cube), alpha(a) {
@@ -80,8 +79,6 @@ struct PhongShader : public IShader {
         else {
             v = model->vert(iface, nthvert);
             normal = model->normal(iface, nthvert).normalize();
-            // Получаем текстурные координаты для головы
-            varying_uv[nthvert] = model->uv(iface, nthvert);
         }
 
         varying_pos[nthvert] = v;
@@ -116,18 +113,8 @@ struct PhongShader : public IShader {
             color = TGAColor(r, g, b, alpha_val);
         }
         else {
-            // Интерполируем UV координаты для текущего фрагмента
-            Vec2f uv = varying_uv[0] * bar.x + varying_uv[1] * bar.y + varying_uv[2] * bar.z;
-            
-            // Получаем цвет из диффузной текстуры
-            TGAColor tex_color = model->diffuse(uv);
-            
-            // Применяем освещение к цвету текстуры
-            unsigned char r = static_cast<unsigned char>(tex_color[2] * intensity);  // Красный
-            unsigned char g = static_cast<unsigned char>(tex_color[1] * intensity);  // Зеленый
-            unsigned char b = static_cast<unsigned char>(tex_color[0] * intensity);  // Синий
-            
-            color = TGAColor(r, g, b, 255);
+            unsigned char val = static_cast<unsigned char>(255 * intensity);
+            color = TGAColor(val, val, val);
         }
 
         return false;
@@ -201,6 +188,7 @@ int main(int argc, char** argv) {
     }
 
     ModelView = oldModelView;
+
 
     image.flip_vertically();
     zbuffer.flip_vertically();
